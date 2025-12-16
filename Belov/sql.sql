@@ -428,4 +428,54 @@ BEGIN
         RAISE NOTICE 'Место с названием "%" не найдено.', _current_name;
     END IF;
 END;
+
 $$;
+
+
+    
+INSERT INTO departments (name) VALUES 
+('IT Отдел'),
+('Бухгалтерия'),
+('Администрация'),
+('Склад материалов');
+
+    
+INSERT INTO time (day) VALUES 
+('2024-01-15'), 
+('2024-06-20'),
+('2025-01-10'); 
+
+
+INSERT INTO objects (object_name, object_cod, creation_year, IMAGE, description) VALUES 
+('Ноутбук Dell Latitude', 'NB-00154', 2023, '/img/dell.jpg', 'Служебный ноутбук инженера'),
+('Монитор Samsung 24"', 'MON-7782', 2022, NULL, 'Изогнутый экран'),
+('Кресло офисное', 'CH-001', 2021, NULL, 'Черное, кожаное'),
+('Принтер HP LaserJet', 'PRN-Kyocera', 2020, '/img/prn.png', 'Сетевой принтер'),
+('Степлер канцелярский', 'OFF-05', 2024, NULL, 'Красный');
+
+    
+INSERT INTO place (id_dep, name, position) VALUES 
+(1, 'Серверная №1', 'Стойка А'),  
+(1, 'Кабинет Сисадминов', 'Стол 2'),
+(2, 'Кабинет Главбуха', 'Сейф'), 
+(4, 'Ангар А', 'Сектор 5 (Верх)');
+  
+INSERT INTO users (login, role, password, id_dep) VALUES 
+('admin', 'admin', 'admin_pass', 1),        
+('accountant_anna', 'user', 'money123', 2),  
+('storekeeper_ivan', 'user', 'stock777', 4),
+('manager_petr', 'user', 'boss2025', 3); 
+
+
+INSERT INTO history (id_ob, id_time, id_p, count) VALUES 
+(1, 1, 1, 5),
+(1, 2, 2, 2),
+(2, 3, 3, 1),
+(3, 1, 4, 50),
+(4, 3, 3, 1);
+
+SELECT * FROM v_full_history;
+
+SELECT * FROM fn_get_my_inventory(1); 
+
+SELECT * FROM fn_get_my_inventory(2);
