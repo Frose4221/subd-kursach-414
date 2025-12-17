@@ -7,12 +7,12 @@ Create table place
 id_dep int4 not null,
 name varchar not null,
 position varchar not null,
-FOREIGN KEY (id_dep) REFERENCES depertaments (id_dep));
+FOREIGN KEY (id_dep) REFERENCES departments  (id_dep));
 
 Create table objects
 (id_ob serial4 primary key,
 object_name varchar not null,
-object_cod UNIQUE varchar not null,
+object_cod varchar UNIQUE not null,
 creation_year int4,
 IMAGE varchar,
 description varchar);
@@ -37,7 +37,7 @@ login varchar(50) NOT NULL,
 role varchar(50) not null,
 password varchar (50) not null,
 id_dep int4,
-FOREIGN KEY (id_dep) REFERENCES depertaments (id_dep));
+FOREIGN KEY (id_dep) REFERENCES departments  (id_dep));
 
 
 
@@ -65,21 +65,20 @@ SELECT
     u.role AS person_role           
 FROM place p
 JOIN departments d ON p.id_dep = d.id_dep
-LEFT JOIN users u ON d.id_dep = u.id_dep -- LEFT JOIN: покажет комнату, даже если нет юзера
+LEFT JOIN users u ON d.id_dep = u.id_dep 
 ORDER BY d.name, p.name;
 
 
--- Добавление времени (даты)
 CREATE OR REPLACE PROCEDURE pr_add_time(
     _day DATE
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Вставляем только если такой даты нет
+
     INSERT INTO time (day)
     VALUES (_day)
-    ON CONFLICT DO NOTHING; -- Требует UNIQUE constraint на поле day, либо уберите эту строку
+    ON CONFLICT DO NOTHING; 
 END;
 $$;
 
@@ -157,15 +156,6 @@ BEGIN
 END;
 $$;
 
-
-
-CALL pr_add_place('Главный склад', 'Полка 5');
-
-CALL pr_add_object('Монитор', 'MON-24', 2024, NULL);
-
-CALL pr_add_user('admin', 'admin123');
-
-CALL pr_add_Inventory_Log(1, 1, 1, 1, 50);
 
 
 
@@ -253,7 +243,7 @@ BEGIN
         p.name AS place_name,
         d.name AS dept_name,
         h.count,
-        t.day -- Прямой вывод даты
+        t.day 
     FROM Inventory_Log h
     JOIN objects o ON h.id_ob = o.id_ob
     JOIN place p ON h.id_p = p.id_p
@@ -306,7 +296,7 @@ $$;
 
 CREATE OR REPLACE PROCEDURE pr_delete_Inventory_Log_by_details(
     _obj_name varchar,
-    _day DATE,         -- Вместо месяца и года теперь одна дата
+    _day DATE,         
     _place_name varchar,
     _count int4
 )
@@ -320,9 +310,8 @@ BEGIN
     WHERE h.id_ob = o.id_ob
       AND h.id_time = t.id_time
       AND h.id_p = p.id_p
-      -- Условия фильтрации
       AND o.object_name = _obj_name
-      AND t.day = _day -- Сравнение даты
+      AND t.day = _day 
       AND p.name = _place_name
       AND h.count = _count;
 
@@ -362,7 +351,7 @@ BEGIN
 END;
 $$;
 
--- Редактирование места (Без изменений)
+
 CREATE OR REPLACE PROCEDURE pr_edit_place_by_name(
     _current_name varchar,  
     _new_name varchar,      
@@ -386,9 +375,9 @@ $$;
 
 
 CREATE OR REPLACE PROCEDURE pr_edit_object_by_code(
-    _current_code varchar,  -- Код объекта, который ищем
+    _current_code varchar,
     _new_name varchar,
-    _new_code varchar,      -- Новый код (можно оставить прежним)
+    _new_code varchar,      
     _new_year int4,
     _new_image varchar,
     _new_description varchar
@@ -479,3 +468,4 @@ SELECT * FROM v_full_history;
 SELECT * FROM fn_get_my_inventory(1); 
 
 SELECT * FROM fn_get_my_inventory(2);
+
