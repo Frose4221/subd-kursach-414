@@ -456,7 +456,7 @@ INSERT INTO users (login, role, password, id_dep) VALUES
 ('manager_petr', 'user', 'boss2025', 3); 
 
 
-INSERT INTO history (id_ob, id_time, id_p, count) VALUES 
+INSERT INTO Inventory_Log (id_ob, id_time, id_p, count) VALUES 
 (1, 1, 1, 5),
 (1, 2, 2, 2),
 (2, 3, 3, 1),
@@ -468,4 +468,5 @@ SELECT * FROM v_full_history;
 SELECT * FROM fn_get_my_inventory(1); 
 
 SELECT * FROM fn_get_my_inventory(2);
+
 
