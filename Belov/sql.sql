@@ -31,6 +31,15 @@ FOREIGN KEY (id_ob) REFERENCES objects (id_ob),
 FOREIGN KEY (id_time) REFERENCES time (id_time),
 FOREIGN KEY (id_p) REFERENCES place (id_p));
 
+CREATE TABLE audit_logs (
+id_log serial4 PRIMARY KEY,
+id_u int4 NOT NULL,               -- Кто (ID пользователя)
+table_name varchar(50) NOT NULL,  -- Где (в какой таблице)
+record_info varchar,              -- Какая строчка (например, "Код объекта: T01")
+action_type varchar(50) NOT NULL, -- Что сделал (Добавление, Редактирование, Удаление)
+action_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Когда (дата и время до секунд)
+FOREIGN KEY (id_u) REFERENCES users (id_u));
+
 CREATE TABLE users
 (id_u serial4 primary key,
 login varchar(50) NOT NULL,
@@ -157,6 +166,53 @@ END;
 $$;
 
 
+-- 1. ОТДЕЛЫ (Departments)
+CREATE OR REPLACE PROCEDURE pr_add_department(_name varchar) LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO departments (name) VALUES (_name);
+END; $$;
+
+CREATE OR REPLACE PROCEDURE pr_edit_department(_id_dep int4, _new_name varchar) LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE departments SET name = _new_name WHERE id_dep = _id_dep;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Отдел не найден'; END IF;
+END; $$;
+
+CREATE OR REPLACE PROCEDURE pr_delete_department(_id_dep int4) LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM departments WHERE id_dep = _id_dep;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Отдел не найден'; END IF;
+END; $$;
+
+-- 2. ПОЛЬЗОВАТЕЛИ (Users - редактирование и удаление)
+CREATE OR REPLACE PROCEDURE pr_edit_user(
+    _id_u int4, _login varchar, _password varchar, _role varchar, _id_dep int4
+) LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE users 
+    SET login = _login, password = _password, role = _role, id_dep = _id_dep
+    WHERE id_u = _id_u;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Пользователь не найден'; END IF;
+END; $$;
+
+CREATE OR REPLACE PROCEDURE pr_delete_user(_id_u int4) LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM users WHERE id_u = _id_u;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Пользователь не найден'; END IF;
+END; $$;
+
+-- 3. ОБЪЕКТЫ и МЕСТА (Удаление)
+CREATE OR REPLACE PROCEDURE pr_delete_object(_object_cod varchar) LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM objects WHERE object_cod = _object_cod;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Объект с кодом % не найден', _object_cod; END IF;
+END; $$;
+
+CREATE OR REPLACE PROCEDURE pr_delete_place(_name varchar) LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM place WHERE name = _name;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Место % не найдено', _name; END IF;
+END; $$;
 
 
 
@@ -256,7 +312,32 @@ BEGIN
 END;
 $$;
 
-
+CREATE OR REPLACE FUNCTION fn_get_expected_inventory(_user_dep int4)
+RETURNS TABLE (
+    place_id int4, 
+    place_name varchar, 
+    object_id int4, 
+    object_name varchar, 
+    object_cod varchar, 
+    image_path varchar, -- Добавлено фото
+    expected_count bigint
+) 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        p.id_p AS place_id, p.name AS place_name,
+        o.id_ob AS object_id, o.object_name, o.object_cod, o.image AS image_path,
+        SUM(h.count) AS expected_count
+    FROM Inventory_Log h
+    JOIN place p ON h.id_p = p.id_p
+    JOIN objects o ON h.id_ob = o.id_ob
+    WHERE p.id_dep = _user_dep
+    GROUP BY p.id_p, p.name, o.id_ob, o.object_name, o.object_cod, o.image
+    ORDER BY p.name, o.object_name;
+END;
+$$;
 
 CREATE OR REPLACE PROCEDURE pr_delete_Inventory_Log_by_details(
     _obj_name varchar,
