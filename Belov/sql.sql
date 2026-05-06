@@ -27,6 +27,7 @@ id_ob int4 not null,
 id_time int4 not null,
 id_p int4 not null,
 count int4 not null CHECK (count >= 0),
+actual_fact int4,
 FOREIGN KEY (id_ob) REFERENCES objects (id_ob),
 FOREIGN KEY (id_time) REFERENCES time (id_time),
 FOREIGN KEY (id_p) REFERENCES place (id_p));
